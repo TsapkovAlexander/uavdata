@@ -74,8 +74,8 @@ npm start
 
 ## Контакты
 
-- Разработчик: [Александр / MKDGroup]
-- Email: tsapkovalexander@gmail.com
+- Разработчики: [Александр Цапков, Михаил Круглов / MKDGroup]
+- Email: tsapkovalexander@gmail.com, exmoul@mail.ru
 - GitHub: @tsapkovalexander
 
 ## Лицензия
