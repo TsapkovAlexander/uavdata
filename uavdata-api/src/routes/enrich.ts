@@ -1,54 +1,109 @@
 import { Router } from "express";
 import multer from "multer";
-import path from "node:path";
-import { UPLOADS_DIR } from "../config.js";
-import { createJob, readJob, readResult, jobURLs } from "../queue.js";
+import fs from "fs/promises";
+import fscb from "fs";
+import path from "path";
+import crypto from "crypto";
 
-const upload = multer({ dest: UPLOADS_DIR });
 const router = Router();
 
-// POST /v1/enrich/single  {message:string}
+const DATA_ROOT = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.resolve("data");
+const JOBS_DIR = path.join(DATA_ROOT, "jobs");
+const UPLOADS_DIR = path.join(DATA_ROOT, "uploads");
+
+// кладём сразу в UPLOADS_DIR (multer сам создаёт temp файл там)
+const upload = multer({ dest: UPLOADS_DIR });
+
+// ---- utils ----
+async function ensureDir(dir: string) { await fs.mkdir(dir, { recursive: true }); }
+function uuid() { return crypto.randomUUID(); }
+async function writeJSON(filePath: string, obj: any) { await fs.writeFile(filePath, JSON.stringify(obj), "utf8"); }
+async function readJSON<T=any>(filePath: string): Promise<T> { return JSON.parse(await fs.readFile(filePath, "utf8")); }
+function jobFile(id: string) { return path.join(JOBS_DIR, `${id}.json`); }
+function resultFile(id: string) { return path.join(JOBS_DIR, `${id}.result.json`); }
+async function createJob<TPayload=any>(type: "single"|"file", payload: TPayload) {
+  await ensureDir(JOBS_DIR);
+  const id = uuid();
+  const now = new Date().toISOString();
+  const job = { id, type, payload, status: "queued" as const, createdAt: now, updatedAt: now };
+  await writeJSON(jobFile(id), job);
+  return job;
+}
+
+// ---- health ----
+router.get("/health", (_req, res) => res.json({ ok: true }));
+
+// ---- single ----
 router.post("/single", async (req, res) => {
   try {
     const message = String(req.body?.message || "");
-    if (!message) return res.status(400).json({ ok: false, error: "message is required" });
-
+    if (!message.trim()) return res.status(400).json({ ok:false, error:"message_required" });
     const job = await createJob("single", { message });
-    const base = `${req.protocol}://${req.get("host")}`;
-    return res.json({ ok: true, ...jobURLs(base, job.id) });
-  } catch (e: any) {
-    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+    const base = `${req.protocol}://${req.get("host")}/v1/enrich`;
+    res.json({ ok:true, job_id: job.id, status_url: `${base}/status/${job.id}`, result_url: `${base}/result/${job.id}` });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error:"internal_error" });
   }
 });
 
-// POST /v1/enrich/batch  (multipart file)
-router.post("/batch", upload.single("file"), async (req, res) => {
+// ---- file (НОВАЯ) ----
+router.post("/file", upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ ok: false, error: "file is required" });
-    const uploadPath = path.resolve(req.file.path);
-    const job = await createJob("batch", { uploadPath });
-    const base = `${req.protocol}://${req.get("host")}`;
-    return res.json({ ok: true, ...jobURLs(base, job.id) });
-  } catch (e: any) {
-    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+    if (!req.file) return res.status(400).json({ ok:false, error:"file_required" });
+    await ensureDir(UPLOADS_DIR);
+    const safeOriginal = (req.file.originalname || "upload.bin").replace(/[^\w.\-]+/g, "_");
+    const finalName = `${uuid()}__${safeOriginal}`;
+    const finalPath = path.join(UPLOADS_DIR, finalName);
+    // req.file.path уже указывает на temp-файл от multer в UPLOADS_DIR — переименуем для стабильного имени
+    await fs.rename(req.file.path, finalPath);
+    const job = await createJob("file", {
+      uploadPath: finalPath,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+    });
+    const base = `${req.protocol}://${req.get("host")}/v1/enrich`;
+    res.json({ ok:true, job_id: job.id, status_url: `${base}/status/${job.id}`, result_url: `${base}/result/${job.id}` });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error:"internal_error" });
   }
 });
 
-// GET /v1/enrich/status/:id
+// ---- status ----
 router.get("/status/:id", async (req, res) => {
-  const j = readJob(req.params.id);
-  if (!j) return res.status(404).json({ ok: false, error: "job not found" });
-  return res.json({ ok: true, job: j });
+  try {
+    const jf = jobFile(req.params.id);
+    if (!fscb.existsSync(jf)) return res.status(404).json({ ok:false, error:"job not found" });
+    const job = await readJSON(jf);
+    res.json({ ok:true, job });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error:"internal_error" });
+  }
 });
 
-// GET /v1/enrich/result/:id
+// ---- result ----
 router.get("/result/:id", async (req, res) => {
-  const j = readJob(req.params.id);
-  if (!j) return res.status(404).json({ ok: false, error: "job not found" });
-  if (j.status !== "done") return res.status(409).json({ ok: false, error: `job status: ${j.status}` });
-  const r = readResult(j.id);
-  if (!r) return res.status(404).json({ ok: false, error: "result not found" });
-  return res.json(r);
+  try {
+    const rf = resultFile(req.params.id);
+    if (!fscb.existsSync(rf)) {
+      const jf = jobFile(req.params.id);
+      if (fscb.existsSync(jf)) {
+        const job = await readJSON(jf);
+        return res.status(409).json({ ok:false, error:`job status: ${job.status}` });
+      }
+      return res.status(404).json({ ok:false, error:"job not found" });
+    }
+    const result = await readJSON(rf);
+    res.json({ ok:true, ...result });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error:"internal_error" });
+  }
 });
 
 export default router;
