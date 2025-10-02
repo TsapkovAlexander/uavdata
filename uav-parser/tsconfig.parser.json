@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist-parser",
+    "module": "Node16",
+    "target": "ES2019",
+    "moduleResolution": "node16",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": [
+    "src/index.ts",
+    "src/services/**/*.ts"
+  ],
+  "exclude": [
+    "src/routes/**/*",
+    "src/db/**/*",
+    "src/models/**/*",
+    "src/services/**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

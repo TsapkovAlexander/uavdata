@@ -1,0 +1,11 @@
+{
+  "id": "2fd4d8ed-2833-44aa-95b1-06a47a43af56",
+  "type": "single",
+  "payload": {
+    "message": "SID 7772290550 DOF/250120 ZZZZ0000 ZZZZ2359 REG/07O9069 TYP/BLA OPR/ООО RMK/МР05664 ГРА4ЕВКА. ОПЕРАТОРЫ БВС"
+  },
+  "status": "error",
+  "createdAt": "2025-10-02T17:14:02.891Z",
+  "updatedAt": "2025-10-02T17:14:03.433Z",
+  "error": "Error: Cannot find module '/root/uav-parser/dist/parser.js'\nRequire stack:\n- /root/uavdata-api/dist/worker.js\n    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)\n    at Function._load (node:internal/modules/cjs/loader:1192:37)\n    at TracingChannel.traceSync (node:diagnostics_channel:322:14)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)\n    at Module.require (node:internal/modules/cjs/loader:1463:12)\n    at require (node:internal/modules/helpers:147:16)\n    at /root/uavdata-api/dist/worker.js:48:122\n    at async getParser (/root/uavdata-api/dist/worker.js:48:17)"
+}

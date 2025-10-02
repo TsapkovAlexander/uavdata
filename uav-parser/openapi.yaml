@@ -1,0 +1,96 @@
+openapi: 3.1.0
+info:
+  title: UAV Parser API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+
+  /api/v1/parse:
+    post:
+      summary: Parse messages without DB write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+              required: [messages]
+      responses:
+        "200":
+          description: Normalized flights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  count: { type: integer }
+                  flights:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FlightUnified"
+
+  /api/v1/ingest:
+    post:
+      summary: Parse + dedup + insert into Supabase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+              required: [messages]
+      responses:
+        "200":
+          description: Ingest result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  flights_count: { type: integer }
+                  inserted: { type: integer }
+                  updated: { type: integer }
+                  duplicates: { type: integer }
+
+components:
+  schemas:
+    FlightUnified:
+      type: object
+      properties:
+        sid: { type: string }
+        dof: { type: string, format: date }
+        dep_time_utc: { type: string }
+        arr_time_utc: { type: string }
+        duration_min: { type: integer }
+        reg:
+          type: array
+          items: { type: string }
+        uav_type: { type: string }
+        status: { type: string }
+        remarks: { type: string }

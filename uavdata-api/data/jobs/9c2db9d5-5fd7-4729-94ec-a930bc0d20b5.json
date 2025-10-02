@@ -1,0 +1,11 @@
+{
+  "id": "9c2db9d5-5fd7-4729-94ec-a930bc0d20b5",
+  "type": "single",
+  "payload": {
+    "message": "..."
+  },
+  "status": "done",
+  "createdAt": "2025-10-02T17:48:46.656Z",
+  "updatedAt": "2025-10-02T17:48:47.429Z",
+  "resultPath": "/root/uavdata-api/data/jobs/9c2db9d5-5fd7-4729-94ec-a930bc0d20b5.result.json"
+}

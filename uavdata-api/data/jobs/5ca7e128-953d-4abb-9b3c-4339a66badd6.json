@@ -1,0 +1,11 @@
+{
+  "id": "5ca7e128-953d-4abb-9b3c-4339a66badd6",
+  "type": "single",
+  "payload": {
+    "message": "SID 7772290550 DOF/250120 ZZZZ0000 ZZZZ2359 REG/07O9069 TYP/BLA OPR/ООО RMK/МР05664 ГРАЧЕВКА. ОПЕРАТОРЫ БВС"
+  },
+  "status": "done",
+  "createdAt": "2025-10-02T17:24:20.189Z",
+  "updatedAt": "2025-10-02T17:24:21.153Z",
+  "resultPath": "/root/uavdata-api/data/jobs/5ca7e128-953d-4abb-9b3c-4339a66badd6.result.json"
+}

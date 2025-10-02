@@ -1,0 +1,31 @@
+{
+  "ok": true,
+  "flights": [
+    {
+      "reg": [
+        "07O9069"
+      ],
+      "source_refs": [
+        {
+          "message_type": "UNKNOWN",
+          "snippet": "SID 7772290550 DOF/250120 ZZZZ0000 ZZZZ2359 REG/07O9069 TYP/BLA OPR/ООО RMK/МР05664 ГРА4ЕВКА. ОПЕРАТОРЫ БВС"
+        }
+      ],
+      "sid": "7772290550",
+      "dof": "2025-01-20",
+      "dep_time_utc": "00:00:00",
+      "arr_time_utc": "23:59:00",
+      "uav_type": "BLA",
+      "operator": {
+        "name": "ООО",
+        "phones": [
+          "7772290550"
+        ]
+      },
+      "remarks": "МР05664 ГРА4ЕВКА. ОПЕРАТОРЫ БВС",
+      "dedup_key": "7772290550_2025-01-20",
+      "duration_min": null
+    }
+  ],
+  "logs": []
+}
