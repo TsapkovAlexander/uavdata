@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 
-import enrichRouter from "./routes/enrich";        // default export
+import enrichRouter from "./routes/enrich";
 import swaggerUi from "swagger-ui-express";
-import openapiDocument from "./openapi";          // ✅ default import
+import openapiDocument from "./openapi"; 
 import { ensureDir } from "./utils/fs";
 
 // Корневая директория данных: ENV или ./data
